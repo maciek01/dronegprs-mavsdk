@@ -154,21 +154,44 @@ async def initVehicle():
 
 		#register listeners
 
+		await vehicle.telemetry.set_rate_position(2)
+		await vehicle.telemetry.set_rate_camera_attitude(1)
+		await vehicle.telemetry.set_rate_in_air(1)
+		await vehicle.telemetry.set_rate_landed_state(1)
+		await vehicle.telemetry.set_rate_landed_state(1)
 
-		asyncio.ensure_future(onPX4_battery(vehicle))
-		asyncio.ensure_future(onPX4_mode(vehicle))
-		asyncio.ensure_future(onPX4_heading(vehicle))
-		asyncio.ensure_future(onPX4_statusText(vehicle))
-		asyncio.ensure_future(onPX4_gps_info(vehicle))
-		#asyncio.ensure_future(print_in_air(vehicle))
-		asyncio.ensure_future(onPX4_position(vehicle))
-		asyncio.ensure_future(onPX4_raw_gps(vehicle))
-		asyncio.ensure_future(onPX4_home(vehicle))
-		asyncio.ensure_future(onPX4_is_armed(vehicle))
+		if False:
+			asyncio.ensure_future(onPX4_battery(vehicle))
+			asyncio.ensure_future(onPX4_mode(vehicle))
+			asyncio.ensure_future(onPX4_heading(vehicle))
+			asyncio.ensure_future(onPX4_statusText(vehicle))
+			asyncio.ensure_future(onPX4_gps_info(vehicle))
+			#asyncio.ensure_future(print_in_air(vehicle))
+			asyncio.ensure_future(onPX4_position(vehicle))
+			asyncio.ensure_future(onPX4_raw_gps(vehicle))
+			asyncio.ensure_future(onPX4_home(vehicle))
+			asyncio.ensure_future(onPX4_is_armed(vehicle))
+		else:
+			asyncio.create_task(onPX4_battery(vehicle))
+			asyncio.create_task(onPX4_mode(vehicle))
+			asyncio.create_task(onPX4_heading(vehicle))
+			asyncio.create_task(onPX4_statusText(vehicle))
+			asyncio.create_task(onPX4_gps_info(vehicle))
+			#asyncio.create_task(print_in_air(vehicle))
+			asyncio.create_task(onPX4_position(vehicle))
+			asyncio.create_task(onPX4_raw_gps(vehicle))
+			asyncio.create_task(onPX4_home(vehicle))
+			asyncio.create_task(onPX4_is_armed(vehicle))
+
 
 
 	finally:
 		unlockV()
+
+
+async def initPosUpdate():
+	asyncio.ensure_future(onPX4_position(vehicle))
+
 
 
 ####################### MAIN THREAD ############################################
@@ -180,6 +203,8 @@ async def pilotMonitor():
 	print("ABOUT to call INIT VEH")
 
 	await initVehicle()
+
+	#task = asyncio.create_task(coro=initPosUpdate(), name="pos")
 
 	#read loop
 
@@ -741,19 +766,19 @@ async def incSpeed1(data):
 async def centerSticks():
 	global vehicle
 
-	await vehicle.manual_control.set_manual_control_input(
-		float(0), float(0), float(0.5), float(0)
-	)
+	#await vehicle.manual_control.set_manual_control_input(
+	#	float(0), float(0), float(0.5), float(0)
+	#)
 
-	await vehicle.manual_control.start_position_control()
+	#await vehicle.manual_control.start_position_control()
 	
 #remove channel overrides
 async def releaseSticks():
 	global vehicle
-	await vehicle.manual_control.set_manual_control_input(
-		float(0), float(0), float(0.5), float(0)
-	)
-	await vehicle.action.hold()
+	#await vehicle.manual_control.set_manual_control_input(
+	#	float(0), float(0), float(0.5), float(0)
+	#)
+	#await vehicle.action.hold()
 
 	#vehicle.channels.overrides = {}
 	

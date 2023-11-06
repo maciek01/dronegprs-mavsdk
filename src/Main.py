@@ -103,9 +103,9 @@ def reportPilotData():
 
 		"stateTimestampMS" : pilot.current_milli_time(),
 		"gpsLatLon" : "",
-		"gpsLat" : pilot.pos.latitude_deg if pilot.pos != None else None,
-		"gpsLon" : pilot.pos.longitude_deg if pilot.pos != None else None,
-		"gpsAlt" : pilot.pos.absolute_altitude_m if pilot.pos != None else None,
+		"gpsLat" : pilot.gps_data.latitude_deg if gps1 != None else None,
+		"gpsLon" : pilot.gps_data.longitude_deg if gps1 != None else None,
+		"gpsAlt" : pilot.gps_data.absolute_altitude_m if gps1 != None else None,
 		"gpsAltRel" : pilot.pos.relative_altitude_m if pilot.pos != None else None,
 
 		"homeLatLon" : "",
@@ -123,9 +123,10 @@ def reportPilotData():
 		"gpsLastStatusMS" : "N/A",
 
 		"airSpeed" : pilot.gps_data.velocity_m_s if gps1 != None else None,
+		#"heading" : pilot.gps_data.yaw_deg if gps1 != None else None,
 		"heading" : pilot.heading,
 		"cog" : pilot.gps_data.cog_deg if gps1 != None else None,
-		"baroAlt" : pilot.pos.absolute_altitude_m if pilot.pos != None else None,
+		"baroAlt" : pilot.gps_data.absolute_altitude_m if gps1 != None else None,
 		"sonarAlt" : pilot.pos.relative_altitude_m if pilot.pos != None else None,
 		"lidarAlt" : pilot.pos.relative_altitude_m if pilot.pos != None else None,
 		#"status" : pilot.vehicle.system_status.state,
