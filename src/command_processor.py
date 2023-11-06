@@ -7,7 +7,7 @@ import datetime
 import sys, traceback
 import threading
 
-import pilot, video_manager
+import Main, pilot, video_manager
 
 import asyncio
 
@@ -20,7 +20,7 @@ task = None
 ########################## ACTION HANDLERS #####################################
 
 async def none(data):
-	print("NONE")
+	Main.log.log("NONE")
 
 async def takeoff(data):
 	return await pilot.takeoff(data)
@@ -142,7 +142,7 @@ async def processCommands():
 
 	while True:
 		try:
-			print("WAIT FOR ACTION:")
+			Main.log.info("WAIT FOR ACTION:")
 			action = await commandQueue.get()
 			result = await actions[action['command']['name']](action)
 

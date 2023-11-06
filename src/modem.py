@@ -6,6 +6,7 @@ import serial, threading
 import time, datetime
 import os.path, csv
 import command_processor
+import Main
 
 
 ##########################################################################
@@ -90,14 +91,14 @@ async def handle_newline(line):
 	MODEMSTATUS = "ON"
 	LASTRESULT = line
 
-	print(line)
+	Main.log.info(line)
 	if expect_body:
 		mt_body = line
 
 		if mt_body.startswith("00"):
 			mt_body = strip00(mt_body)
 			mt_body = hex2ascii(mt_body)
-			print(mt_body)
+			Main.log.info(mt_body)
 
 		mt_body = mt_body.lower().strip()
 
@@ -252,7 +253,7 @@ def read_from_port(modemport, modembaud):
 			MODEMSIGNAL = "NONE"
 			time.sleep(5)
 
-	print("connected RX")
+	Main.log.info("connected RX")
 
 	#read loop
 	ser = serialPort
@@ -288,7 +289,7 @@ def read_from_port(modemport, modembaud):
 		traceback.print_exc()
 
 	serialPort = None
-	print("disconnected RX")
+	Main.log.info("disconnected RX")
 	MODEMSTATUS = "OFF"
 
 #writter thread
@@ -300,7 +301,7 @@ def get_status(sleepS):
 	while serialPort == None and readOn:
 		time.sleep(sleepS)
 
-	print("connected TX")
+	Main.log.info("connected TX")
 	initSMS(serialPort)
 
 	while readOn:
@@ -319,7 +320,7 @@ def get_status(sleepS):
 			initSMS(serialPort) #reinitialize sms
 			traceback.print_exc()
 
-	print("disconnected TX")
+	Main.log.info("disconnected TX")
 
 def sendRESP():
 	for line in resp:

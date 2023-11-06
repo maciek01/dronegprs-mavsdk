@@ -35,6 +35,8 @@ gpsPort = None
 unitID = None
 mavlinkPort = None
 
+log = logger.setup_custom_logger('main')
+
 def subst(str, net = False):
 	global HOST
 	ipAddress = HOST
@@ -261,10 +263,8 @@ async def run():
 	global gpsPort
 	global unitID
 	global mavlinkPort
+	global log
 
-
-
-	log = logger.setup_custom_logger('main')
 
 	log.info("STARTING MAIN MODULE")
 

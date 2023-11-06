@@ -3,7 +3,7 @@
 import sys, traceback
 import serial, threading
 import time, datetime
-
+import Main
 
 
 readOn = True
@@ -141,7 +141,7 @@ def handle_data(data):
 				handle_newline(getLine)
 			except Exception as inst:
 				traceback.print_exc()
-				print("line:"+getLine)
+				Main.log.info("line:"+getLine)
 				time.sleep(5)
 		else:
 			buffer = buffer + str(d)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import subprocess, time, os, signal
+import Main
 
 stream_cmd = None
 
@@ -23,19 +24,19 @@ def toggleVid(data):
 #		try:
 #			process.terminate()
 #		except Exception as inst:
-#			print inst
+#			Main.log.info( inst
 #
 #		time.sleep(1)
 #
 #		try:
 #			process.kill()
 #		except Exception as inst:
-#			print inst
+#			Main.log.info( inst
 
 		try:
 			os.killpg(os.getpgid(process.pid), signal.SIGTERM)
 		except Exception as inst:
-			print(inst)
+			Main.log.info(inst)
 
 		process = None
 
