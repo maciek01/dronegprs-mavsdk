@@ -1,2 +1,2 @@
 # dronegprs-mavsdk
-dronegprs port for px4 mavsdk
+port of https://github.com/maciek01/dronegprs for px4 mavsdk
