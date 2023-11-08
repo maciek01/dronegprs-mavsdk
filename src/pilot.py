@@ -27,6 +27,10 @@ vehicleLock = threading.RLock()
 URL = None
 BAUD = None
 
+#monitoring tasks
+
+tasks = []
+
 #MAVLINK status
 curr_tot = 0
 voltages = None
@@ -40,6 +44,7 @@ gps_data = None
 home = None
 mode = None
 armed = None
+connected = False
 
 
 
@@ -101,6 +106,7 @@ async def onPX4_is_armed(drone):
 		armed = is_armed
 
 
+
 ########################### THREAD HELPERS #####################################
 
 def lockV():
@@ -113,11 +119,18 @@ async def initVehicle():
 	global URL
 	global BAUD
 	global vehicle
+	global tasks
 
 	lockV()
 	try:
 		if vehicle != None:
+			for task in tasks:
+				try:
+					task.cancel()
+				except:
+					Main.log.info("ERROR WHEN CANCELLING A TASK")
 
+			tasks = []
 			#close vehicle
 			try:
 				vehicle.close()
@@ -141,6 +154,7 @@ async def initVehicle():
 				Main.log.info("Waiting for drone to connect...")
 				async for state in _vehicle.core.connection_state():
 					if state.is_connected:
+						connected = True
 						Main.log.info(f"Connected to vehicle")
 						break
 				Main.log.info("Connected via " + URL)
@@ -161,28 +175,16 @@ async def initVehicle():
 		await vehicle.telemetry.set_rate_landed_state(1)
 		await vehicle.telemetry.set_rate_landed_state(1)
 
-		if False:
-			asyncio.ensure_future(onPX4_battery(vehicle))
-			asyncio.ensure_future(onPX4_mode(vehicle))
-			asyncio.ensure_future(onPX4_heading(vehicle))
-			asyncio.ensure_future(onPX4_statusText(vehicle))
-			asyncio.ensure_future(onPX4_gps_info(vehicle))
-			#asyncio.ensure_future(print_in_air(vehicle))
-			asyncio.ensure_future(onPX4_position(vehicle))
-			asyncio.ensure_future(onPX4_raw_gps(vehicle))
-			asyncio.ensure_future(onPX4_home(vehicle))
-			asyncio.ensure_future(onPX4_is_armed(vehicle))
-		else:
-			asyncio.create_task(onPX4_battery(vehicle))
-			asyncio.create_task(onPX4_mode(vehicle))
-			asyncio.create_task(onPX4_heading(vehicle))
-			asyncio.create_task(onPX4_statusText(vehicle))
-			asyncio.create_task(onPX4_gps_info(vehicle))
-			#asyncio.create_task(print_in_air(vehicle))
-			asyncio.create_task(onPX4_position(vehicle))
-			asyncio.create_task(onPX4_raw_gps(vehicle))
-			asyncio.create_task(onPX4_home(vehicle))
-			asyncio.create_task(onPX4_is_armed(vehicle))
+		tasks.append(asyncio.create_task(onPX4_battery(vehicle)))
+		tasks.append(asyncio.create_task(onPX4_mode(vehicle)))
+		tasks.append(asyncio.create_task(onPX4_heading(vehicle)))
+		tasks.append(asyncio.create_task(onPX4_statusText(vehicle)))
+		tasks.append(asyncio.create_task(onPX4_gps_info(vehicle)))
+		#tasks.append(asyncio.create_task(print_in_air(vehicle)))
+		tasks.append(asyncio.create_task(onPX4_position(vehicle)))
+		tasks.append(asyncio.create_task(onPX4_raw_gps(vehicle)))
+		tasks.append(asyncio.create_task(onPX4_home(vehicle)))
+		tasks.append(asyncio.create_task(onPX4_is_armed(vehicle)))
 
 
 
@@ -190,14 +192,12 @@ async def initVehicle():
 		unlockV()
 
 
-async def initPosUpdate():
-	asyncio.ensure_future(onPX4_position(vehicle))
-
-
 
 ####################### MAIN THREAD ############################################
 
 async def pilotMonitor():
+
+	global vehicle
 
 	#wait to initialize the pilot
 
@@ -205,17 +205,21 @@ async def pilotMonitor():
 
 	await initVehicle()
 
-	#task = asyncio.create_task(coro=initPosUpdate(), name="pos")
-
 	#read loop
 
 	while True:
 		try:
 			await asyncio.sleep(1)
-			#if vehicle.last_heartbeat > 5:
-			if False:
-				Main.log.info("REINIT VEHICLE CONNECTION")
-				await initVehicle()
+
+			async for state in vehicle.core.connection_state():
+				connected = state.is_connected
+				if not state.is_connected:
+					Main.log.info(f"Disconnected from vehicle")
+					break
+
+			#if not connected:
+			#	Main.log.info("REINIT VEHICLE CONNECTION")
+			#	await initVehicle()
 
 		except Exception as inst:
 			#traceback.print_exc()

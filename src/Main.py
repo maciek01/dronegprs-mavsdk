@@ -24,11 +24,9 @@ good_heartbeat = None
 #good_heartbeat = pilot.current_milli_time()
 
 #1 minute before triggerting http FS
-#FS_TRESHOLD = 6000
 FS_TRESHOLD = 60000
 
 #request timeout
-#HTTP_TIMEOUT = 0.000005
 HTTP_TIMEOUT = 5
 
 gpsPort = None
@@ -376,7 +374,7 @@ async def run():
 
 	async for state in pilot.vehicle.core.connection_state():
 		if state.is_connected:
-			log.info(" COnnected")
+			log.info(" Connected")
 			break
 
 
@@ -397,7 +395,7 @@ async def run():
 
 
 	#get home loc
-	log.info(f"\n Home location: {pilot.home}")
+	log.info(f"Home location: {pilot.home}")
 
 
 	log.info("STARTING COMMAND LOOP")
