@@ -1,11 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-#import queue
 import json
 import time
 import datetime
 import sys, traceback
-import threading
 
 import Main, pilot, video_manager
 
@@ -14,13 +12,14 @@ import asyncio
 
 commandQueue = None
 
-thread = None
 task = None
+
+log = None
 
 ########################## ACTION HANDLERS #####################################
 
 async def none(data):
-	Main.log.log("NONE")
+	log("NONE")
 
 async def takeoff(data):
 	return await pilot.takeoff(data)
@@ -139,10 +138,11 @@ async def processCommands():
 
 	global commandQueue
 	global actions
+	global log
 
 	while True:
 		try:
-			Main.log.info("WAIT FOR ACTION:")
+			log.info("WAIT FOR ACTION:")
 			action = await commandQueue.get()
 			result = await actions[action['command']['name']](action)
 
@@ -154,17 +154,15 @@ async def processCommands():
 
 ################################ INIT ##########################################
 
-async def processorinit():
-	global thread
+async def processorinit(_log):
 	global commandQueue
 	global task
+	global log
+
+	log = _log
 
 	commandQueue = asyncio.Queue()
 
 	task = asyncio.create_task(coro=processCommands(), name="command_processor")
-
-	#thread = threading.Thread(target=processCommands)
-	#thread.daemon = True
-	#thread.start()
 
 

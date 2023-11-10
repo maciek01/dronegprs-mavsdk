@@ -33,7 +33,8 @@ gpsPort = None
 unitID = None
 mavlinkPort = None
 
-log = logger.setup_custom_logger('main')
+log = None
+
 
 def subst(str, net = False):
 	global HOST
@@ -263,6 +264,7 @@ async def run():
 	global mavlinkPort
 	global log
 
+	log = logger.setup_custom_logger('main')
 
 	log.info("STARTING MAIN MODULE")
 
@@ -359,7 +361,7 @@ async def run():
 
 	log.info("STARTING COMMAND PROCESSOR MODULE")
 	#initialize command queue
-	await command_processor.processorinit()
+	await command_processor.processorinit(log)
 
 
 
