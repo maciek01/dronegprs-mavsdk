@@ -747,7 +747,7 @@ async def speedAdjust(delta):
 	
 	lockV()
 	try:
-		operatingSpeed = str(max(min(int(operatingSpeed) + delta, 15), 1))
+		operatingSpeed = str(max(min(int(operatingSpeed) + delta, 20), 1))
 		await vehicle.action.set_current_speed(float(operatingSpeed))
 		
 		log.info(" operating speed is now " + operatingSpeed)
@@ -760,42 +760,42 @@ async def speedAdjust(delta):
 async def decAlt1(data):
 	global log
 	log.info("DECALT1")
-	return altAdjust(-1)
+	return await altAdjust(-1)
 	
 async def decAlt10(data):
 	global log
 	log.info("DECALT10")
-	return altAdjust(-10)
+	return await altAdjust(-10)
 	
 async def incAlt10(data):
 	global log
 	log.info("INCALT10")
-	return altAdjust(10)
+	return await altAdjust(10)
 	
 async def incAlt1(data):
 	global log
 	log.info("INCALT1")
-	return altAdjust(1)
+	return await altAdjust(1)
 	
 async def decSpeed1(data):
 	global log
 	log.info("DECSPEED1")
-	return speedAdjust(-1)
+	return await speedAdjust(-1)
 	
 async def decSpeed10(data):
 	global log
 	log.info("DECSPEED10")
-	return speedAdjust(-10)
+	return await speedAdjust(-10)
 	
 async def incSpeed10(data):
 	global log
 	log.info("INCSPEED10")
-	return speedAdjust(10)
+	return await speedAdjust(10)
 	
 async def incSpeed1(data):
 	global log
 	log.info("INCSPEED1")
-	return speedAdjust(1)
+	return await speedAdjust(1)
 
 
 #override channels - center 
