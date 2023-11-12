@@ -93,6 +93,7 @@ def reportPilotData():
 	
 	try:
 		pilot.gps_info
+		pilot.gps_data
 		gps1 = pilot.gps_info
 	except Exception:
 		gps1 = None
@@ -349,7 +350,7 @@ async def run():
 	#initialize pilot
 	if mavlinkPort != "":
 		log.info("STARTING PILOT MODULE AT " + mavlinkPort)
-		await pilot.pilotinit(mavlinkPort, int(mavlinkBaud))
+		await pilot.pilotinit(log, mavlinkPort, int(mavlinkBaud))
 
 	#initialize gps
 	if gpsPort != "":

@@ -26,6 +26,7 @@ vehicle = None
 vehicleLock = threading.RLock()
 URL = None
 BAUD = None
+log = None
 
 #monitoring tasks
 
@@ -120,6 +121,8 @@ async def initVehicle():
 	global BAUD
 	global vehicle
 	global tasks
+	global log
+
 
 	lockV()
 	try:
@@ -128,7 +131,7 @@ async def initVehicle():
 				try:
 					task.cancel()
 				except:
-					Main.log.info("ERROR WHEN CANCELLING A TASK")
+					log.info("ERROR WHEN CANCELLING A TASK")
 
 			tasks = []
 			#close vehicle
@@ -147,17 +150,17 @@ async def initVehicle():
 				#PX4
 				_vehicle = System()
 				#await _vehicle.connect(system_address="udp://:14540")
-				Main.log.info("calling connect " + URL)
+				log.info("calling connect " + URL)
 				await _vehicle.connect(system_address=URL)
-				Main.log.info("connect accepted " + URL)
+				log.info("connect accepted " + URL)
 
-				Main.log.info("Waiting for drone to connect...")
+				log.info("Waiting for drone to connect...")
 				async for state in _vehicle.core.connection_state():
 					if state.is_connected:
 						connected = True
-						Main.log.info(f"Connected to vehicle")
+						log.info(f"Connected to vehicle")
 						break
-				Main.log.info("Connected via " + URL)
+				log.info("Connected via " + URL)
 				vehicle = _vehicle
 
 
@@ -198,10 +201,10 @@ async def initVehicle():
 async def pilotMonitor():
 
 	global vehicle
+	global log
 
 	#wait to initialize the pilot
-
-	Main.log.info("ABOUT to call INIT VEH")
+	log.info("ABOUT to call INIT VEH")
 
 	await initVehicle()
 
@@ -214,11 +217,11 @@ async def pilotMonitor():
 			async for state in vehicle.core.connection_state():
 				connected = state.is_connected
 				if not state.is_connected:
-					Main.log.info(f"Disconnected from vehicle")
+					log.info(f"Disconnected from vehicle")
 					break
 
 			#if not connected:
-			#	Main.log.info("REINIT VEHICLE CONNECTION")
+			#	log.info("REINIT VEHICLE CONNECTION")
 			#	await initVehicle()
 
 		except Exception as inst:
@@ -229,10 +232,13 @@ async def pilotMonitor():
 
 ###################### INIT HANDLER ############################################
 	
-async def pilotinit(url, baud):
+async def pilotinit(_log, url, baud):
 	global URL
 	global BAUD
 	global task
+	global log
+
+	log = _log
 
 	URL = url
 	BAUD = baud
@@ -244,10 +250,11 @@ async def pilotinit(url, baud):
 async def arm(data):
 
 	global vehicle
+	global log
 
 	lockV()
 	try:
-		Main.log.info("ARM")
+		log.info("ARM")
 
 		await vehicle.action.arm()
 		await releaseSticks()
@@ -264,10 +271,11 @@ async def arm(data):
 async def disarm(data):
 
 	global vehicle
+	global log
 
 	lockV()
 	try:
-		Main.log.info("DISARM")
+		log.info("DISARM")
 			
 		await vehicle.action.arm()
 		await releaseSticks()
@@ -276,7 +284,7 @@ async def disarm(data):
 		savedLat = None
 		savedLon = None		
 	
-		Main.log.info(" disarming")
+		log.info(" disarming")
 		return "OK"	
 		
 	finally:
@@ -286,6 +294,7 @@ async def disarm(data):
 async def takeoff(data):
 
 	global vehicle
+	global log
 
 	lockV()
 	try:
@@ -295,7 +304,7 @@ async def takeoff(data):
 		#request and wait for the arm thread to be armed	
 		await arm(data)
 
-		Main.log.info("TAKEOFF")
+		log.info("TAKEOFF")
 
 		i = 0
 		while not armed and i < 10:
@@ -303,7 +312,7 @@ async def takeoff(data):
 			await asyncio.sleep(1)
 
 		if not armed:
-			Main.log.info(" NOT ARMED")
+			log.info(" NOT ARMED")
 			return "ERROR: NOT ARMED IN 10 secs"
 			
 		await vehicle.action.set_takeoff_altitude(float(aTargetAltitude))
@@ -314,7 +323,7 @@ async def takeoff(data):
 		savedLat = None
 		savedLon = None		
 		
-		Main.log.info(" took off")
+		log.info(" took off")
 			
 
 		return "OK"
@@ -328,10 +337,11 @@ async def land(data):
 	global requestedLon
 	global savedLat
 	global savedLon
+	global log
 	
 	lockV()
 	try:
-		Main.log.info("LAND")
+		log.info("LAND")
 		#if not armed:
 			#print " NOT ARMED"
 			#return "ERROR: NOT ARMED"
@@ -345,7 +355,7 @@ async def land(data):
 		requestedLat = None
 		requestedLon = None
 		
-		Main.log.info(" landing")
+		log.info(" landing")
 	
 		return "OK"
 
@@ -359,10 +369,11 @@ async def position(data):
 	global requestedLon
 	global savedLat
 	global savedLon 
+	global log
 	
 	lockV()
 	try:
-		Main.log.info("POSITION")
+		log.info("POSITION")
 			
 		await centerSticks()
 		await vehicle.action.hold()
@@ -387,10 +398,11 @@ async def loiter(data):
 	global requestedLon
 	global savedLat
 	global savedLon 
+	global log
 	
 	lockV()
 	try:
-		Main.log.info("LOITER")
+		log.info("LOITER")
 			
 		await centerSticks()
 		await vehicle.action.hold()
@@ -414,10 +426,11 @@ async def auto(data):
 	global requestedLon
 	global savedLat
 	global savedLon 
+	global log
 	
 	lockV()
 	try:
-		Main.log.info("AUTO")
+		log.info("AUTO")
 			
 		await releaseSticks()
 		await vehicle.mission.start_mission()
@@ -437,16 +450,11 @@ async def auto(data):
 async def pause(data):
 
 	global vehicle
-	global operatingAlt
-	global operatingSpeed
-	global requestedLat
-	global requestedLon
-	global savedLat
-	global savedLon 
+	global log
 	
 	lockV()
 	try:
-		Main.log.info("PAUSE")
+		log.info("PAUSE")
 			
 		
 		if True:
@@ -465,13 +473,15 @@ async def resume(data):
 	global vehicle
 	global requestedLat
 	global requestedLon
+	global operatingSpeed
 	global savedLat
 	global savedLon 
 	global geodesic
+	global log
 	
 	lockV()
 	try:
-		Main.log.info("RESUME")
+		log.info("RESUME")
 
 		if savedLat != None and savedLon != None:
 			requestedLat = savedLat
@@ -500,10 +510,11 @@ async def resume(data):
 async def manual(data):
 
 	global vehicle
+	global log
 	
 	lockV()
 	try:
-		Main.log.info("MANUAL")
+		log.info("MANUAL")
 		await vehicle.action.hold()
 		await releaseSticks()
 		return "OK"
@@ -513,10 +524,11 @@ async def manual(data):
 
 async def reHome(data):
 	global vehicle
+	global log
 	
 	lockV()
 	try:
-		Main.log.info("REHOME - not supported")
+		log.info("REHOME - not supported")
 
 		#vehicle.home_location=vehicle.location.global_frame
 
@@ -530,17 +542,20 @@ async def rtl(data):
 	global vehicle
 	global requestedLat
 	global requestedLon
+	global operatingSpeed
 	global savedLat
 	global savedLon	   
+	global log
 	
 	lockV()
 	try:
-		Main.log.info("RTL")
+		log.info("RTL")
 		#if not armed:
 			#print " NOT ARMED"
 			#return "ERROR: NOT ARMED"
 
 		await vehicle.action.return_to_launch()
+		await vehicle.action.set_current_speed(float(operatingSpeed))
 		await releaseSticks()
 
 		#cancel last goto
@@ -549,7 +564,7 @@ async def rtl(data):
 		requestedLat = None
 		requestedLon = None
 		
-		Main.log.info(" returning home")
+		log.info(" returning home")
 
 
 		return "OK"
@@ -564,13 +579,15 @@ async def goto(data):
 	global operatingAlt
 	global requestedLat
 	global requestedLon
+	global operatingSpeed
 	global geodesic
+	global log
 	
 	lockV()
 	try:
-		Main.log.info("GOTO")
+		log.info("GOTO")
 		if not armed:
-			Main.log.info(" NOT ARMED")
+			log.info(" NOT ARMED")
 			return "ERROR: NOT ARMED"
 		
 		parameters = data['command']['parameters']
@@ -587,8 +604,10 @@ async def goto(data):
 
 		if fwd_azimuth <0:
 			fwd_azimuth = 360.0 + fwd_azimuth
-		
-		await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(fwd_azimuth))
+		try:
+			await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(fwd_azimuth))
+		except:
+			traceback.print_exc()
 		await vehicle.action.set_current_speed(float(operatingSpeed))
 
 		await releaseSticks()
@@ -597,7 +616,7 @@ async def goto(data):
 		savedLat = None
 		savedLon = None
 
-		Main.log.info(" going to ")
+		log.info(" going to ")
 		return "OK"
 
 	finally:
@@ -605,9 +624,10 @@ async def goto(data):
 
 async def setHome(data):
 	global vehicle
+	global log
 	lockV()
 	try:
-		Main.log.info("SETHOME - not supported")
+		log.info("SETHOME - not supported")
 		
 		parameters = data['command']['parameters']
 		
@@ -634,10 +654,11 @@ async def alt(data):
 	global requestedLat
 	global requestedLon
 	global operatingSpeed
+	global log
 	
 	lockV()
 	try:
-		Main.log.info("ALT")
+		log.info("ALT")
 		
 		parameters = data['command']['parameters']
 		
@@ -657,7 +678,7 @@ async def alt(data):
 					await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(fwd_azimuth))
 					await vehicle.action.set_current_speed(float(operatingSpeed))
 		
-		Main.log.info(" operating alt is now " + operatingAlt)
+		log.info(" operating alt is now " + operatingAlt)
 		return "OK"
 
 	finally:
@@ -689,7 +710,7 @@ async def altAdjust(delta):
 			await vehicle.action.set_current_speed(float(operatingSpeed))
 
 		
-		Main.log.info(" operating alt is now " + operatingAlt)
+		log.info(" operating alt is now " + operatingAlt)
 
 		return "OK"
 
@@ -700,10 +721,11 @@ async def speed(data):
 
 	global vehicle
 	global operatingSpeed
+	global log
 	
 	lockV()
 	try:
-		Main.log.info("SPEED")
+		log.info("SPEED")
 		
 		parameters = data['command']['parameters']
 		
@@ -712,7 +734,7 @@ async def speed(data):
 				operatingSpeed = i['value']
 				await vehicle.action.set_current_speed(float(operatingSpeed))
 		
-		Main.log.info(" operating speed is now " + operatingSpeed)
+		log.info(" operating speed is now " + operatingSpeed)
 		return "OK"
 
 	finally:
@@ -721,13 +743,14 @@ async def speed(data):
 async def speedAdjust(delta):
 	global vehicle
 	global operatingSpeed
+	global log
 	
 	lockV()
 	try:
 		operatingSpeed = str(max(min(int(operatingSpeed) + delta, 15), 1))
 		await vehicle.action.set_current_speed(float(operatingSpeed))
 		
-		Main.log.info(" operating speed is now " + operatingSpeed)
+		log.info(" operating speed is now " + operatingSpeed)
 		
 		return "OK"
 
@@ -735,35 +758,43 @@ async def speedAdjust(delta):
 		unlockV()
 
 async def decAlt1(data):
-	Main.log.info("DECALT1")
+	global log
+	log.info("DECALT1")
 	return altAdjust(-1)
 	
 async def decAlt10(data):
-	Main.log.info("DECALT10")
+	global log
+	log.info("DECALT10")
 	return altAdjust(-10)
 	
 async def incAlt10(data):
-	Main.log.info("INCALT10")
+	global log
+	log.info("INCALT10")
 	return altAdjust(10)
 	
 async def incAlt1(data):
-	Main.log.info("INCALT1")
+	global log
+	log.info("INCALT1")
 	return altAdjust(1)
 	
 async def decSpeed1(data):
-	Main.log.info("DECSPEED1")
+	global log
+	log.info("DECSPEED1")
 	return speedAdjust(-1)
 	
 async def decSpeed10(data):
-	Main.log.info("DECSPEED10")
+	global log
+	log.info("DECSPEED10")
 	return speedAdjust(-10)
 	
 async def incSpeed10(data):
-	Main.log.info("INCSPEED10")
+	global log
+	log.info("INCSPEED10")
 	return speedAdjust(10)
 	
 async def incSpeed1(data):
-	Main.log.info("INCSPEED1")
+	global log
+	log.info("INCSPEED1")
 	return speedAdjust(1)
 
 
