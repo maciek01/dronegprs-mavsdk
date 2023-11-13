@@ -44,7 +44,7 @@ bin/install.sh
 
 bin/setup.sh
 
-5. Follow steps in bin/uart.readme.md
+5. Follow steps in ./uart.readme.md
 
 
 Video and streaming tests:
