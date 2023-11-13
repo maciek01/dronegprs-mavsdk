@@ -20,48 +20,52 @@ ground station console: http://home.kolesnik.org:8000/map.html
 
 
 
-SETUP
+SETUP:
 
-1. run:
+1. Run camera test:
 
 On Bullseye and later OSes:
 
 Make sure to disable legacy camera then restart RPi.
-Test the camera: libcamera-vid -t 10000 -o test.h264
-
+Test the camera:
+```
+libcamera-vid -t 10000 -o test.h264
+```
 
 It shoudl capyture 10 secs of jmpeg video
 
 2. Run:
-
+```
 bin/update-pi.sh
-
+```
 3. Run:
-
+```
 bin/install.sh
-
+bin/gst-install.sh
+```
 4. Run
-
+```
 bin/setup.sh
+```
+5. Follow steps in [uart.readme.md](./uart.readme.md)
 
-5. Follow steps in bin/uart.readme.md
 
 
-Video and streaming tests:
+Conduct video and streaming tests:
 
 VIDEO STREAM VALIDATION (requiers gst - part of the install.sh script)
-
+```
 gst-launch-1.0 -e -v udpsrc port=3333 ! application/x-rtp, encoding-name=JPEG, payload=26 ! rtpjpegdepay ! jpegdec ! autovideosink
-
+```
 or
-
+```
 libcamera-vid -v 0 -t 0 --nopreview --framerate 15 --codec mjpeg --bitrate 2500000 --profile baseline --rotation 180  --width 640 --height 480 --inline -o -|gst-launch-1.0 fdsrc ! jpegparse ! rtpjpegpay ! udpsink host=<web rtc host - ex: janus> port=3333
-
+```
 
 Also, with bullseye onwards, you can test streaming to a destinaction (say, vlc on your laptop):
-
+```
 libcamera-vid -v 0 -t 0 --nopreview --rotation 180  --inline -o udp://<destination ip>:3333
-
+```
 
 
 
