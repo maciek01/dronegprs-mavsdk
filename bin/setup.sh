@@ -3,8 +3,14 @@
 
 DRONEGPRS_PATH=/home/pi/dronegprs-mavsdk
 
+sudo rm /etc/ppp/chatscripts
 sudo ln -s $DRONEGPRS_PATH/etc/ppp/chatscripts /etc/ppp/chatscripts
 sudo ln -s $DRONEGPRS_PATH/etc/ppp/options-mobile /etc/ppp/options-mobile
+
+# LTE-simbase:
+
+sudo ln -s $DRONEGPRS_PATH/etc/ppp/peers/mobile-noauth-simcom7600a-simbase-USB2 /etc/ppp/peers/mobile-noauth-simcom7600a-simbase-USB2
+
 
 # LTE-hologram:
 
