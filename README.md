@@ -41,6 +41,7 @@ bin/update-pi.sh
 3. Run:
 ```
 bin/install.sh
+bin/gst-install.sh
 ```
 4. Run
 ```
