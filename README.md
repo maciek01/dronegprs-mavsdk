@@ -20,7 +20,7 @@ ground station console: http://home.kolesnik.org:8000/map.html
 
 
 
-SETUP
+SETUP:
 
 1. Run camera test:
 
@@ -50,7 +50,8 @@ bin/setup.sh
 5. Follow steps in [uart.readme.md](./uart.readme.md)
 
 
-Video and streaming tests:
+
+Conduct video and streaming tests:
 
 VIDEO STREAM VALIDATION (requiers gst - part of the install.sh script)
 ```
