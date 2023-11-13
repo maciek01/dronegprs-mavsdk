@@ -26,8 +26,6 @@ Reboot and test serial coms with:
   sudo minicom -D /dev/ttyAMA0 -b38400
 
 
-
-
 Next
 
   sudo vi /boot/cmdline.txt
@@ -42,7 +40,8 @@ Or:
 
 Or anything involving console= that isn't console=tty1, remove it. Make sure not to accidentally add a line break to that file, it should remain all one line with spaces between the options, but no spaces around any =.
 
-dwc_otg.lpm_enable=0 console=tty1 root=PARTUUID=7ad5c2ec-02 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait
+console=tty1 root=PARTUUID=26fd76a0-02 rootfstype=ext4 fsck.repair=yes rootwait
+
 
 
 The other aspect is the login started by the init system. On Raspbian jessie, check:
