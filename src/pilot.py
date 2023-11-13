@@ -6,10 +6,10 @@ import threading
 import time, datetime, json
 import asyncio
 from mavsdk import System
-import pyproj
 import Main
+import numpy
+import math
 
-geodesic = pyproj.Geod(ellps='WGS84')
 
 current_milli_time = lambda: int(time.time() * 1000)
 
@@ -245,6 +245,19 @@ async def pilotinit(_log, url, baud):
 
 	task = asyncio.create_task(coro=pilotMonitor(), name="pilot")
 
+############################ LOACAL FUNCs     ##################################
+
+def get_bearing(lat1, long1, lat2, long2):
+	dLon = (long2 - long1)
+	x = math.cos(math.radians(lat2)) * math.sin(math.radians(dLon))
+	y = math.cos(math.radians(lat1)) * math.sin(math.radians(lat2)) - math.sin(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.cos(math.radians(dLon))
+	brng = numpy.arctan2(x,y)
+	brng = numpy.degrees(brng)
+
+	return brng
+
+
+
 ############################ COMMAND HANDLERS ##################################
 
 async def arm(data):
@@ -476,7 +489,6 @@ async def resume(data):
 	global operatingSpeed
 	global savedLat
 	global savedLon 
-	global geodesic
 	global log
 	
 	lockV()
@@ -488,12 +500,16 @@ async def resume(data):
 			requestedLon = savedLon
 			#vehicle.mode = VehicleMode("GUIDED")
 
-			fwd_azimuth,back_azimuth,distance = geodesic.inv(pos.longitude_deg, pos.latitude_deg, float(requestedLon), float(requestedLat))
 
-			if fwd_azimuth <0:
-				fwd_azimuth = 360.0 + fwd_azimuth
+			brg = get_bearing(pos.latitude_deg, pos.longitude_deg, float(requestedLat), float(requestedLon))
 
-			await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(fwd_azimuth))
+
+			try:
+				await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(brg))
+			except:
+				traceback.print_exc()
+
+
 			await vehicle.action.set_current_speed(float(operatingSpeed))
 
 			savedLat = None
@@ -580,7 +596,6 @@ async def goto(data):
 	global requestedLat
 	global requestedLon
 	global operatingSpeed
-	global geodesic
 	global log
 	
 	lockV()
@@ -600,14 +615,14 @@ async def goto(data):
 				lon = i['value']
 				requestedLon = lon
 
-		fwd_azimuth,back_azimuth,distance = geodesic.inv(pos.longitude_deg, pos.latitude_deg, float(requestedLon), float(requestedLat))
+		brg = get_bearing(pos.latitude_deg, pos.longitude_deg, float(requestedLat), float(requestedLon))
 
-		if fwd_azimuth <0:
-			fwd_azimuth = 360.0 + fwd_azimuth
+
 		try:
-			await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(fwd_azimuth))
+			await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(brg))
 		except:
 			traceback.print_exc()
+
 		await vehicle.action.set_current_speed(float(operatingSpeed))
 
 		await releaseSticks()
@@ -670,12 +685,17 @@ async def alt(data):
 					#vehicle.mode = VehicleMode("GUIDED")
 					#point1 = LocationGlobalRelative(float(requestedLat), float(requestedLon), int(operatingAlt))
 					#vehicle.simple_goto(point1, int(operatingSpeed))
-					fwd_azimuth,back_azimuth,distance = geodesic.inv(pos.longitude_deg, pos.latitude_deg, float(requestedLon), float(requestedLat))
 
-					if fwd_azimuth <0:
-						fwd_azimuth = 360.0 + fwd_azimuth
 
-					await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(fwd_azimuth))
+
+					brg = get_bearing(pos.latitude_deg, pos.longitude_deg, float(requestedLat), float(requestedLon))
+
+
+					try:
+						await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(brg))
+					except:
+						traceback.print_exc()
+
 					await vehicle.action.set_current_speed(float(operatingSpeed))
 		
 		log.info(" operating alt is now " + operatingAlt)
@@ -691,7 +711,6 @@ async def altAdjust(delta):
 	global requestedLat
 	global requestedLon
 	global operatingSpeed
-	global geodesic
 	
 	lockV()
 	try:
@@ -701,12 +720,14 @@ async def altAdjust(delta):
 		if requestedLat != None and requestedLon != None:
 			#wont work in LOITER mode
 
-			fwd_azimuth,back_azimuth,distance = geodesic.inv(pos.longitude_deg, pos.latitude_deg, float(requestedLon), float(requestedLat))
+			brg = get_bearing(pos.latitude_deg, pos.longitude_deg, float(requestedLat), float(requestedLon))
 
-			if fwd_azimuth <0:
-				fwd_azimuth = 360.0 + fwd_azimuth
 
-			await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(fwd_azimuth))
+			try:
+				await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(brg))
+			except:
+				traceback.print_exc()
+
 			await vehicle.action.set_current_speed(float(operatingSpeed))
 
 		
