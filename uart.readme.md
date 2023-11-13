@@ -5,15 +5,18 @@ https://www.raspberrypi.org/documentation/configuration/uart.md
 #setting up RPi3 UART
 
 
-  sudo vi /boot/config.txt
+sudo vi /boot/config.txt
+
 
 Add to the end of the file
 
-dtoverlay=pi3-disable-bt
+dtoverlay=disable-bt
 
 console=tty1
 
 enable_uart=1
+
+
 
 
 We also need to run to stop BT modem trying to use UART
@@ -38,6 +41,8 @@ Or:
 
   console=/dev/serial0,115200 
 
+
+
 Or anything involving console= that isn't console=tty1, remove it. Make sure not to accidentally add a line break to that file, it should remain all one line with spaces between the options, but no spaces around any =.
 
 console=tty1 root=PARTUUID=26fd76a0-02 rootfstype=ext4 fsck.repair=yes rootwait
@@ -46,10 +51,14 @@ console=tty1 root=PARTUUID=26fd76a0-02 rootfstype=ext4 fsck.repair=yes rootwait
 
 The other aspect is the login started by the init system. On Raspbian jessie, check:
 
+
 ls /etc/systemd/system/getty.target.wants
+
+
 If you see that serial device node (ttyS0) mentioned, disable this service:
 
- sudo systemctl disable serial-getty@ttyS0.service
+
+sudo systemctl disable serial-getty@ttyS0.service
 
 
 
