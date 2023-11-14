@@ -3,10 +3,9 @@
 import asyncio
 import sys, traceback
 import serial, threading
-import time, datetime
 import os.path, csv
 import command_processor
-import Main
+import time, datetime
 
 
 ##########################################################################
@@ -27,6 +26,10 @@ getLine = ""
 #threads
 rx_thread = None
 tx_thread = None
+rxTask = None
+txTask = None
+
+log = None
 
 #dont read and write from the same port at the same time - needed??
 portLock = threading.RLock()
@@ -86,19 +89,21 @@ async def handle_newline(line):
 	global expect_body
 	global resp
 	global mt_header
+	global log
 
 
 	MODEMSTATUS = "ON"
 	LASTRESULT = line
 
-	Main.log.info(line)
+	#local log var not yet intialized
+	log.info(line)
 	if expect_body:
 		mt_body = line
 
 		if mt_body.startswith("00"):
 			mt_body = strip00(mt_body)
 			mt_body = hex2ascii(mt_body)
-			Main.log.info(mt_body)
+			log.info(mt_body)
 
 		mt_body = mt_body.lower().strip()
 
@@ -210,14 +215,14 @@ def smsStatus():
 
 
 
-def handle_data(data):
+async def handle_data(data):
 	global buffer
 	global getLine
 	for d in data:
 		if d == '\n':
 			getLine = buffer
 			buffer = ""
-			handle_newline(getLine)
+			await handle_newline(getLine)
 		elif d != '\r':
 			buffer = buffer + str(d)
 
@@ -234,16 +239,17 @@ def openSerial(modemport, modembaud, quiet):
 
 
 #reader thread
-def read_from_port(modemport, modembaud):
+async def read_from_port(modemport, modembaud):
 	global readOn
 	global serialPort
 	global MODEMSTATUS
 	global MODEMSIGNAL
+	global log
 
-	time.sleep(5)
+	await asyncio.sleep(5)
 
 	while readOn and not os.path.isfile("/home/pi/modemup"):
-		time.sleep(1)
+		await asyncio.sleep(1)
 
 	#wait to initialize the port
 	while serialPort == None and readOn:
@@ -251,9 +257,9 @@ def read_from_port(modemport, modembaud):
 		if serialPort == None:
 			MODEMSTATUS = "OFF"
 			MODEMSIGNAL = "NONE"
-			time.sleep(5)
+			await asyncio.sleep(5)
 
-	Main.log.info("connected RX")
+	log.info("connected RX")
 
 	#read loop
 	ser = serialPort
@@ -263,15 +269,15 @@ def read_from_port(modemport, modembaud):
 			lockP()
 			try:
 				if ser.inWaiting() > 0:
-					handle_data(ser.read(ser.inWaiting()))
+					await handle_data(ser.read(ser.inWaiting()).decode("utf-8"))
 			finally:
 				unlockP()
 			MODEMSTATUS = "ON"
-			time.sleep(1)
+			await asyncio.sleep(1)
 		except IOError as inst: #this handling is wrong - reinit the whole process instead
 			MODEMSTATUS = "OFF"
 			traceback.print_exc()
-			time.sleep(5)
+			await asyncio.sleep(5)
 			try:
 				ser.close()
 			except Exception as inst:
@@ -281,7 +287,7 @@ def read_from_port(modemport, modembaud):
 		except Exception as inst:
 			MODEMSTATUS = "OFF"
 			traceback.print_exc()
-			time.sleep(5)
+			await asyncio.sleep(5)
 
 	try:
 		ser.close()
@@ -289,46 +295,47 @@ def read_from_port(modemport, modembaud):
 		traceback.print_exc()
 
 	serialPort = None
-	Main.log.info("disconnected RX")
+	log.info("disconnected RX")
 	MODEMSTATUS = "OFF"
 
 #writter thread
-def get_status(sleepS):
+async def get_status(sleepS):
 	global readOn
 	global serialPort
 	global resp
+	global log
 
 	while serialPort == None and readOn:
-		time.sleep(sleepS)
+		await asyncio.sleep(sleepS)
 
-	Main.log.info("connected TX")
-	initSMS(serialPort)
+	log.info("connected TX")
+	await initSMS(serialPort)
 
 	while readOn:
 		try:
-			time.sleep(sleepS)
+			await asyncio.sleep(sleepS)
 
 			if resp != None:
 				sendRESP()
 				resp = None
 
-			#sendSigReq(serialPort) #this is now automatic
-			sendInboxReq(serialPort)
+			#await sendSigReq(serialPort) #this is now automatic
+			await sendInboxReq(serialPort)
 
 
 		except Exception as inst:
-			initSMS(serialPort) #reinitialize sms
+			await initSMS(serialPort) #reinitialize sms
 			traceback.print_exc()
 
-	Main.log.info("disconnected TX")
+	log.info("disconnected TX")
 
-def sendRESP():
+async def sendRESP():
 	for line in resp:
 		lockP()
 		try:
-			serialPort.write(line)
+			serialPort.write(line.encode())
 			flushPort(serialPort)
-			time.sleep(2)
+			await asyncio.sleep(2)
 				
 		finally:
 			unlockP()
@@ -337,49 +344,49 @@ def sendRESP():
 def flushPort(ser):
 	ser.flush()
 
-def initSMS(ser):
+async def initSMS(ser):
 	lockP()
 	try:
-		ser.write("AT+CMGF=1\r") #text format
+		ser.write("AT+CMGF=1\r".encode()) #text format
 		flushPort(ser)
-		time.sleep(0.5)
-		ser.write("AT+CGSMS=1\r")
+		await asyncio.sleep(0.5)
+		ser.write("AT+CGSMS=1\r".encode())
 		flushPort(ser)
-		time.sleep(0.5)
-		ser.write("AT+CSMP=17,167,0,242\r") #flash/regular message
+		await asyncio.sleep(0.5)
+		ser.write("AT+CSMP=17,167,0,242\r".encode()) #flash/regular message
 		flushPort(ser)
-		time.sleep(0.5)
-		ser.write("AT+AUTOCSQ=1,0\r") #request signal update every 5 secs
+		await asyncio.sleep(0.5)
+		ser.write("AT+AUTOCSQ=1,0\r".encode()) #request signal update every 5 secs
 		flushPort(ser)
-		time.sleep(0.5)
+		await asyncio.sleep(0.5)
 	finally:
 		unlockP()
 
-def sendInboxReq(ser):
+async def sendInboxReq(ser):
 	lockP()
 	try:
-		ser.write("AT+CMGL=\"ALL\"\r") #examine inbox
+		ser.write("AT+CMGL=\"ALL\"\r".encode()) #examine inbox
 		flushPort(ser)
-		time.sleep(0.5)
+		await asyncio.sleep(0.5)
 	finally:
 		unlockP()
 
-def sendSigReq(ser):
+async def sendSigReq(ser):
 	lockP()
 	try:
-		ser.write("AT+CSQ\r")
+		ser.write("AT+CSQ\r".encode())
 		flushPort(ser)
-		time.sleep(0.5)
+		await asyncio.sleep(0.5)
 	finally:
 		unlockP()
 
-def isModem(port, baud):
+async def isModem(port, baud):
 
 	global serialPort
 	global TESTRESULT
 
 	while not os.path.isfile("/home/pi/modemup"):   #create file by hand to break the loop
-		time.sleep(1)
+		await asyncio.sleep(1)
 
 	if not os.path.isfile("/home/pi/modemup"):
 		return False
@@ -389,55 +396,67 @@ def isModem(port, baud):
 	if serialPort == None:
 		return False
 
-	serialPort.write("AT+CPIN?\r")
+	serialPort.write("AT+CPIN?\r".encode())
 	cnt = 0
+	#test for modem response
 	while cnt < 5:
 		try:
-			time.sleep(1)
+			await asyncio.sleep(1)
 			cnt = cnt + 1
 			if serialPort.inWaiting() > 0:
-				handle_data(serialPort.read(serialPort.inWaiting()))
+				await handle_data(serialPort.read(serialPort.inWaiting()).decode("utf-8"))
 		except Exception as inst:
 			traceback.print_exc()
 
 	serialPort.close()
 	serialPort = None
 
+
 	return TESTRESULT
 
-def findModem(ports, baud):
+async def findModem(ports, baud):
 	for port in ports:
-		if isModem(port, baud):
+		if await isModem(port, baud):
 			return port
 
 	return ""
 
 
+def loginit(_log):
+	global log
 
+	log = _log
 
 	
-def modeminit(modemport, modembaud, sleepS, isMonitor):
+async def modeminit(modemport, modembaud, sleepS, isMonitor):
 	global rx_thread
 	global tx_thread
 	global readOn
 
+	global rxTask
+	global txTask
+	global log
+
 	readOn = True
 
 	while not os.path.isfile("/home/pi/modemup"):   #create file by hand to break the loop
-		time.sleep(1)
+		await asyncio.sleep(1)
 
 	if not os.path.isfile("/home/pi/modemup"):
 		return False
 
+	#rx_thread = threading.Thread(target=read_from_port, args=(modemport,modembaud,))
+	#rx_thread.daemon = True
+	#rx_thread.start()
 
-	rx_thread = threading.Thread(target=read_from_port, args=(modemport,modembaud,))
-	rx_thread.daemon = True
-	rx_thread.start()
+	rxTask = asyncio.create_task(coro=read_from_port(modemport,modembaud), name="modemRX")
+
 
 	if isMonitor:
-		tx_thread = threading.Thread(target=get_status, args=(sleepS,))
-		tx_thread.daemon = True
-		tx_thread.start()
+		#tx_thread = threading.Thread(target=get_status, args=(sleepS,))
+		#tx_thread.daemon = True
+		#tx_thread.start()
+		txTask = asyncio.create_task(coro=get_status(sleepS,), name="modemTX")
 
 
 def modemstop():

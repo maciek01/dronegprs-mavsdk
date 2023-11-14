@@ -6,7 +6,7 @@ import time
 import datetime
 import sys, traceback
 
-import Main, pilot, video_manager
+import pilot, video_manager
 
 import asyncio
 

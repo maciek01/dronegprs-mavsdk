@@ -6,7 +6,6 @@ import threading
 import time, datetime, json
 import asyncio
 from mavsdk import System
-import Main
 import numpy
 import math
 

@@ -2,8 +2,6 @@
 
 import httplib2, requests
 import json
-import time
-import datetime
 import socket
 import sys, traceback
 import gps, pilot, modem, video_manager
@@ -333,15 +331,17 @@ async def run():
 	dbmanager.open(dbfile)
 
 	#initialize modem monitor
+	modem.loginit(log)
 	if modemPort == "" and modems != "":
 		log.info("LOOK FOR AVAILABLE MODEMS ...")
 		modemList = modems.split(',')
-		firstModem = modem.findModem(modemList, int(modemBaud))
+		firstModem = await modem.findModem(modemList, int(modemBaud))
 	else:
 		firstModem = modemPort
+
 	if firstModem != "":
 		log.info("STARTING MODEM MODULE AT " + firstModem)
-		modem.modeminit(firstModem, int(modemBaud), 5, True)
+		await modem.modeminit(firstModem, int(modemBaud), 5, True)
 
 	#net context available
 	videoStreamCmd = subst(config.get('main', 'videoStreamCmd'), net=True)
