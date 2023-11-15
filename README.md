@@ -2,19 +2,19 @@
 port of https://github.com/maciek01/dronegprs for px4 mavsdk
 
 
-Goal of the project is to establish 2 way control between ground station server and a fleet of UAVs (drones, planes, ...) leveraging 3G and 4G LTE based data networks.
+Goal of the project is to establish 2-way communication and control between ground station server and a fleet of UAVs (drones, planes, ...) leveraging 3G and 4G LTE based data networks.
 
 The idea is to enable governmental institutions to autonomously deploy drones in event of minor scale emergencies with ability to monitor and control the deployment of each indivudual UAV.
 
 Scope of POC:
 
-Each UAV will be equipped with MAVlink compatible flight controller, GPS module, Raspbery PI connected to a 3g/4g LTE modem. Raspberry PI will host the following software: MAVSDK, custom developed status reporting and control service to enable processing of ground station commands.
+Each UAV will be equipped with MAVlink compatible flight controller, GPS module, HD Video module, Raspbery PI ZERO connected to a 3g/4g LTE modem. Raspberry PI will host the following software: MAVSDK, WebRTC video streaming software, custom-developed status reporting and control service to enable processing of ground station commands and to control the video stream.
 
 "Ground station" is based on an HTTP RESTfull service and a control and monitoring center web site, deployed and available via internet.
 
-Each UAV will report its stats (position, speed, altitude, heading, battery state, etc.) to the ground station via HTTP client.
+Each UAV will report its stats (position, speed, altitude, heading, battery state, etc.) to the ground station via HTTP client. UAVs will be capable of independently sending the WebRTC video stream to the ground station.
 
-Groud station will allow operatios to monitor/visualize each UAV status/location, and command it remotely. Examples of command: land immediately, return to home/abord the mission, deploy payload, alter course/go to waypoint, alter mission, swarm, travel to another UAV, etc..
+Groud station will allow operatios to monitor/visualize each UAV status/location, display the video stream, and command it remotely. Examples of command: land immediately, return to home/abord the mission, deploy payload, alter course/go to waypoint, alter mission, swarm, travel to another UAV, etc..
 
 
 Ground station prototype console: http://home.kolesnik.org:8000/map.html
@@ -48,10 +48,8 @@ bin/gst-install.sh
 ```
 bin/setup.sh
 ```
-5. Follow steps in [uart.readme.md](./uart.readme.md)
 
-
-7. DIsable ModemManager
+5. Disable ModemManager
 ```
 sudo systemctl stop ModemManager.service
 sudo systemctl disable ModemManager.service
@@ -61,6 +59,9 @@ To enable it back if necessary:
 ```
 sudo systemctl enable ModemManager.service
 ```
+
+6. Follow steps in [uart.readme.md](./uart.readme.md)
+
 
 
 
