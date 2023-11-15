@@ -3,14 +3,15 @@
 #exec 1> >(logger -s -t $(basename $0)) 2>&1
 
 #cleanup wifi
-rm -f $HOME/modemup
-sudo ifconfig wlan0 up
+sudo rm -rf $HOME/modemup
+#sudo ifconfig wlan0 up
 
 #wait for USB
 while [ `lsusb |grep Qualcomm|wc -l ` -eq '0' ]
 do
     sleep 1
 done
+echo got modem on a USB port
 
 #modem is up
 sleep 1
@@ -29,22 +30,25 @@ else
 fi
 
 #reset and ping the modem
-echo "ATZ" >>$MODEM
+sudo echo "ATZ" >>$MODEM
 sleep 2
-echo "AT+CFUN=1,1" >>$MODEM
+sudo echo "AT+CFUN=1,1" >>$MODEM
 sleep 2
 
 #dial up
 PROVIDER=`grep modemProvider /home/pi/main.cfg`
 PROVIDER="$(cut -d'=' -f2 <<<"$PROVIDER")"
+echo starting ppp0
 pon $PROVIDER-${MODEM: -4}
 sleep 1
+echo start requested for ppp0
 
 #wait for ppp0
 while [ `ifconfig |grep ppp0|wc -l ` -eq '0' ]
 do
     sleep 1
 done
+echo ppp0 available
 sleep 5
 
 #capture ppp0 interface ip
@@ -77,6 +81,7 @@ if [ -f $HOME/wifi ]; then
 fi
 
 #fixup dns
+echo set default DNS via google
 sudo cp $HOME/dronegprs-mavsdk/resolv.conf.8.8.8.8 /etc/resolv.conf
 sudo cp $HOME/dronegprs-mavsdk/resolv.conf.8.8.8.8 /etc/ppp/resolv.conf
 
@@ -89,6 +94,7 @@ sudo cp $HOME/dronegprs-mavsdk/resolv.conf.8.8.8.8 /etc/ppp/resolv.conf
 #192.168.2.0     *               255.255.255.0   U     304    0        0 wlan0
 
 set +e
+echo set default route via ppp0
 #sudo route delete default gw 192.168.2.1 wlan0
 sudo route delete default gw $DEFIP $DEFIF
 sudo route add default gw $IP ppp0

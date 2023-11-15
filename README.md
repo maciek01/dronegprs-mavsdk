@@ -51,6 +51,18 @@ bin/setup.sh
 5. Follow steps in [uart.readme.md](./uart.readme.md)
 
 
+7. DIsable ModemManager
+```
+sudo systemctl stop ModemManager.service
+sudo systemctl disable ModemManager.service
+```
+
+To enable it back if necessary:
+```
+sudo systemctl enable ModemManager.service
+```
+
+
 
 Conduct video and streaming tests:
 
