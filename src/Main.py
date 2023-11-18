@@ -391,6 +391,8 @@ async def run():
 					log.info("FAILSAFE - noncritical")
 			break
 		else:
+			log.info("Waiting for HOME location")
+
 			await sendHeartbeat(log, unitID, http, url, headers)
 			if good_heartbeat != None:
 				if pilot.current_milli_time() - good_heartbeat > FS_TRESHOLD:

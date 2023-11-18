@@ -265,10 +265,15 @@ async def arm(data):
 	global log
 
 	lockV()
+
 	try:
 		log.info("ARM")
 
-		await vehicle.action.arm()
+		try:
+			await vehicle.action.arm()
+		except:
+			traceback.print_exc()
+
 		await releaseSticks()
 		
 		#cancel resume
@@ -289,7 +294,10 @@ async def disarm(data):
 	try:
 		log.info("DISARM")
 			
-		await vehicle.action.arm()
+		try:
+			await vehicle.action.disarm()
+		except:
+			traceback.print_exc()
 		await releaseSticks()
 		
 		#cancel resume
@@ -314,7 +322,10 @@ async def takeoff(data):
 		aTargetAltitude = operatingAlt
 
 		#request and wait for the arm thread to be armed	
-		await arm(data)
+		try:
+			await arm(data)
+		except:
+			traceback.print_exc()
 
 		log.info("TAKEOFF")
 
@@ -328,7 +339,10 @@ async def takeoff(data):
 			return "ERROR: NOT ARMED IN 10 secs"
 			
 		await vehicle.action.set_takeoff_altitude(float(aTargetAltitude))
-		await vehicle.action.takeoff()
+		try:
+			await vehicle.action.takeoff()
+		except:
+			traceback.print_exc()
 		await releaseSticks()
 
 		#cancel resume
@@ -358,7 +372,11 @@ async def land(data):
 			#print " NOT ARMED"
 			#return "ERROR: NOT ARMED"
 			
-		await vehicle.action.land()
+		try:
+			await vehicle.action.land()
+		except:
+			traceback.print_exc()
+
 		await releaseSticks()
 
 		#cancel last goto		
@@ -388,7 +406,10 @@ async def position(data):
 		log.info("POSITION")
 			
 		await centerSticks()
-		await vehicle.action.hold()
+		try:
+			await vehicle.action.hold()
+		except:
+			traceback.print_exc()
 		
 		#save last goto
 		savedLat = requestedLat
@@ -417,7 +438,10 @@ async def loiter(data):
 		log.info("LOITER")
 			
 		await centerSticks()
-		await vehicle.action.hold()
+		try:
+			await vehicle.action.hold()
+		except:
+			traceback.print_exc()
 		
 		#save last goto
 		savedLat = requestedLat
@@ -445,7 +469,10 @@ async def auto(data):
 		log.info("AUTO")
 			
 		await releaseSticks()
-		await vehicle.mission.start_mission()
+		try:
+			await vehicle.mission.start_mission()
+		except:
+			traceback.print_exc()
 		
 		#save last goto
 		savedLat = None
@@ -471,7 +498,10 @@ async def pause(data):
 		
 		if True:
 			#just loiter
-			await vehicle.action.hold()
+			try:
+				await vehicle.action.hold()
+			except:
+				traceback.print_exc()
 
 		
 			
@@ -530,7 +560,11 @@ async def manual(data):
 	lockV()
 	try:
 		log.info("MANUAL")
-		await vehicle.action.hold()
+		try:
+			await vehicle.action.hold()
+		except:
+			traceback.print_exc()
+
 		await releaseSticks()
 		return "OK"
 
@@ -569,7 +603,11 @@ async def rtl(data):
 			#print " NOT ARMED"
 			#return "ERROR: NOT ARMED"
 
-		await vehicle.action.return_to_launch()
+		try:
+			await vehicle.action.return_to_launch()
+		except:
+			traceback.print_exc()
+
 		await vehicle.action.set_current_speed(float(operatingSpeed))
 		await releaseSticks()
 
