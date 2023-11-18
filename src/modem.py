@@ -79,7 +79,7 @@ def strip00(line):
 def hex2ascii(line):
 	bytes_obj = bytes.fromhex(line)
 
-	return bytes_obj.decode("utf-8")
+	return bytes_obj.decode("ascii")
 		
 
 async def handle_newline(line):
@@ -98,14 +98,17 @@ async def handle_newline(line):
 	LASTRESULT = line
 
 	#local log var not yet intialized
-	log.info(line)
+	log.info("MODEM >> " + line)
 	if expect_body:
 		mt_body = line
 
 		if mt_body.startswith("00"):
 			mt_body = strip00(mt_body)
 			mt_body = hex2ascii(mt_body)
-			log.info(mt_body)
+			log.info("MODEM MSG DECODED=" + mt_body)
+		else:
+			log.info("MODEM MSG RAW=" + mt_body)
+
 
 		mt_body = mt_body.lower().strip()
 
@@ -115,20 +118,25 @@ async def handle_newline(line):
 
 		if not bodyHandled and mt_header[mt_status] == "REC READ":
 			newResp.append("AT+CMGD=" + mt_header[mt_idx] + "\r")
+			log.info("SMS alredy read -  deleting")
 			bodyHandled = True
 
 
 		if not bodyHandled and mt_body.startswith("stat"):
+			log.info("SMS handling stat")
 			newResp.append("AT+CMGD=" + mt_header[mt_idx] + "\r")
 			msg_parts = splitMsg(smsStatus())
 			for part in msg_parts:
 				newResp.append("AT+CMGS=\"" + mt_header[mt_src_addr] + "\"\r")
 				newResp.append(part + chr(26))
+				log.info("SMS reply=" + part)
 			bodyHandled = True
 		if not bodyHandled and mt_body.startswith("rtl"):
+			log.info("SMS handling rtl")
 			newResp.append("AT+CMGD=" + mt_header[mt_idx] + "\r")
 			newResp.append("AT+CMGS=\"" + mt_header[mt_src_addr] + "\"\r")
 			newResp.append("rtl received" + chr(26))
+			log.info("SMS reply=rtl received")
 			bodyHandled = True
 
 			action = {
@@ -145,11 +153,14 @@ async def handle_newline(line):
 			newResp.append("AT+CMGD=" + mt_header[mt_idx] + "\r")
 			newResp.append("AT+CMGS=\"" + mt_header[mt_src_addr] + "\"\r")
 			newResp.append("valid commands: stat, rtl, help" + chr(26))
+			log.info("SMS reply=valid commands: stat, rtl, help")
 			bodyHandled = True
 
 
 		if len(newResp) != 0:
 			resp = newResp
+
+		log.info("MODEM response=" + str(resp))
 
 	else:	#not expect_body
 		if line.startswith("+CSQ:"):
@@ -318,7 +329,7 @@ async def get_status(sleepS):
 			await asyncio.sleep(sleepS)
 
 			if resp != None:
-				sendRESP()
+				await sendRESP()
 				resp = None
 
 			#await sendSigReq(serialPort) #this is now automatic
@@ -335,7 +346,8 @@ async def sendRESP():
 	for line in resp:
 		lockP()
 		try:
-			serialPort.write(line.encode())
+			log.info("MODEM << " + line);
+			serialPort.write(bytearray(line, "ascii"))
 			flushPort(serialPort)
 			await asyncio.sleep(2)
 				
