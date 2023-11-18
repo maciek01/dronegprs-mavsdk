@@ -41,8 +41,8 @@ do_start () {
     sudo chown $DAEMON_USER:$DAEMON_USER /var/run/$DAEMON_NAME
 
     set e+
-    NOW=$( date '+%F_%H:%M:%S' )
-    mv $HOME_DIR/pilot.log $HOME_DIR/pilot.$NOW.log
+    NOW=$( date '+%F_%H_%M_%S' )
+    mv $HOME_DIR/pilot.log $HOME_DIR/pilot.log.$NOW
     set e-
     start-stop-daemon --start --background --pidfile $PIDFILE --make-pidfile --user $DAEMON_USER --chuid $DAEMON_USER:$DAEMON_USER --startas /bin/bash -- -c "exec $DAEMON $DAEMON_OPTS >> $HOME_DIR/pilot.log 2>&1"
     rm -rf /tmp/screenrc.$$
