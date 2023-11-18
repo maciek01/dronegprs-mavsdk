@@ -11,8 +11,10 @@ import logger
 async def run():
 	log = logger.setup_custom_logger('main')
 
-	await command_processor.processorinit(log)
-	await pilot.pilotinit(log)
+	command_processor.log = log
+	command_processor.commandQueue = asyncio.Queue()
+
+	pilot.log = log
 
 	await command_processor.commandQueue.put(json.loads('{"command":{"name" : "RTL"}}'))
 	await command_processor.commandQueue.put(json.loads('{"command":{"name" : "LAND"}}'))

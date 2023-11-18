@@ -77,7 +77,9 @@ def strip00(line):
 	return line
 
 def hex2ascii(line):
-	return line.decode("hex")
+	bytes_obj = bytes.fromhex(line)
+
+	return bytes_obj.decode("utf-8")
 		
 
 async def handle_newline(line):

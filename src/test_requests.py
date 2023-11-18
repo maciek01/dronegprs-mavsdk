@@ -11,9 +11,9 @@ myobj = {'somekey': 'somevalue'}
 
 try:
 	x = requests.post(url, data = myobj, timeout=0.001)
-	print x.text 
-	print x.status_code
-	print x.ok
+	print(x.text )
+	print(x.status_code)
+	print(x.ok)
 except Exception as inst:
 	traceback.print_exc()
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-
+import logger
 import dbmanager
 
 
+dbmanager.log = logger.setup_custom_logger('main')
 
 dbmanager.open("/home/pi/uavonboard.db")
 
@@ -13,7 +14,7 @@ dbmanager.close()
 
 
 for wp in wps:
-	print wp[0], wp[1], wp[2]
+	print(wp[0], wp[1], wp[2])
 
 
 

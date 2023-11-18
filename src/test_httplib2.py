@@ -12,13 +12,13 @@ myobj = {'somekey': 'somevalue'}
 
 try:
 
-        httplib2.debuglevel     = 0
-        http                    = httplib2.Http(timeout=0.001)
+	httplib2.debuglevel     = 0
+	http                    = httplib2.Http(timeout=0.001)
 
 	response, content = http.request(url , 'POST', json.dumps(myobj), headers={"Content-Type": "application/json"})
 
-	print content
-	print response.status
+	print(content)
+	print(response.status)
 except Exception as inst:
 	traceback.print_exc()
 
