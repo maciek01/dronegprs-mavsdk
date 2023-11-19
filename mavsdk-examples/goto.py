@@ -6,7 +6,7 @@ from mavsdk import System
 
 async def run():
     drone = System()
-    await drone.connect(system_address="udp://:14540")
+    await drone.connect(system_address="serial:///dev/serial0:57600")
 
     print("Waiting for drone to connect...")
     async for state in drone.core.connection_state():
@@ -31,9 +31,9 @@ async def run():
     print("-- Taking off")
     await drone.action.takeoff()
 
-    await asyncio.sleep(15)
+    await asyncio.sleep(1)
     # To fly drone 20m above the ground plane
-    flying_alt = absolute_altitude + 40.0
+    flying_alt = absolute_altitude + 20.0
     # goto_location() takes Absolute MSL altitude
     await drone.action.goto_location(47.397606, 8.543060, flying_alt, 0)
 
@@ -43,7 +43,6 @@ async def run():
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(run())
-
+    # Run the asyncio loop
+    asyncio.run(run())
 
