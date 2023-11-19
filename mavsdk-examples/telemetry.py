@@ -9,11 +9,23 @@ async def run():
     drone = System()
     await drone.connect(system_address="serial:///dev/serial0:57600")
 
+
+    await drone.telemetry.set_rate_position(1)
+    await drone.telemetry.set_rate_battery(5)
+    await drone.telemetry.set_rate_gps_info(5)
+    await drone.telemetry.set_rate_in_air(1)
+
+
     # Start the tasks
-    asyncio.ensure_future(print_battery(drone))
-    asyncio.ensure_future(print_gps_info(drone))
-    asyncio.ensure_future(print_in_air(drone))
-    asyncio.ensure_future(print_position(drone))
+    #asyncio.ensure_future(print_battery(drone))
+    #asyncio.ensure_future(print_gps_info(drone))
+    #asyncio.ensure_future(print_in_air(drone))
+    #asyncio.ensure_future(print_position(drone))
+
+    asyncio.create_task(print_battery(drone))
+    asyncio.create_task(print_gps_info(drone))
+    asyncio.create_task(print_in_air(drone))
+    asyncio.create_task(print_position(drone))
 
     while True:
         await asyncio.sleep(1)
