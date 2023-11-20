@@ -91,10 +91,21 @@ def reportPilotData():
 	
 	try:
 		pilot.gps_info
-		pilot.gps_data
 		gps1 = pilot.gps_info
 	except Exception:
 		gps1 = None
+	
+	try:
+		pilot.gps_data
+		gpsd = pilot.gps_data
+	except Exception:
+		gpsd = None
+	
+	try:
+		pilot.pos
+		pos = pilot.pos
+	except Exception:
+		pos = None
 	
 	
 	data = {
@@ -103,10 +114,10 @@ def reportPilotData():
 
 		"stateTimestampMS" : pilot.current_milli_time(),
 		"gpsLatLon" : "",
-		"gpsLat" : pilot.gps_data.latitude_deg if gps1 != None else None,
-		"gpsLon" : pilot.gps_data.longitude_deg if gps1 != None else None,
-		"gpsAlt" : pilot.gps_data.absolute_altitude_m if gps1 != None else None,
-		"gpsAltRel" : pilot.pos.relative_altitude_m if pilot.pos != None else None,
+		"gpsLat" : pos.latitude_deg if pos != None else None,
+		"gpsLon" : pos.longitude_deg if pos != None else None,
+		"gpsAlt" : pos.absolute_altitude_m if pos != None else None,
+		"gpsAltRel" : pilot.pos.relative_altitude_m if pos != None else None,
 
 		"homeLatLon" : "",
 		"homeLat" : pilot.home.latitude_deg if pilot.home != None else None,
@@ -116,19 +127,19 @@ def reportPilotData():
 		"operatingAlt" : pilot.operatingAlt,
 		"operatingSpeed" : pilot.operatingSpeed,
 
-		"gpsSpeed" : pilot.gps_data.velocity_m_s  if gps1 != None else None,
+		"gpsSpeed" : gpsd.velocity_m_s  if gpsd != None else None,
 		"gpsTime" : "none",
 		"gpsStatus" : "none",
 		#"gpsLastStatusMS" : pilot.current_milli_time() - pilot.vehicle.last_heartbeat,
 		"gpsLastStatusMS" : "N/A",
 
-		"airSpeed" : pilot.gps_data.velocity_m_s if gps1 != None else None,
-		#"heading" : pilot.gps_data.yaw_deg if gps1 != None else None,
+		"airSpeed" : gpsd.velocity_m_s if gpsd != None else None,
+		#"heading" : gpsd.yaw_deg if gpsd != None else None,
 		"heading" : pilot.heading,
-		"cog" : pilot.gps_data.cog_deg if gps1 != None else None,
-		"baroAlt" : pilot.gps_data.absolute_altitude_m if gps1 != None else None,
-		"sonarAlt" : pilot.pos.relative_altitude_m if pilot.pos != None else None,
-		"lidarAlt" : pilot.pos.relative_altitude_m if pilot.pos != None else None,
+		"cog" : gpsd.cog_deg if gpsd != None else None,
+		"baroAlt" : gpsd.absolute_altitude_m if gpsd != None else None,
+		"sonarAlt" : pos.relative_altitude_m if pos != None else None,
+		"lidarAlt" : pos.relative_altitude_m if pos != None else None,
 		#"status" : pilot.vehicle.system_status.state,
 		"status" : "N/A",
 		"mode" : pilot.mode,
@@ -137,13 +148,13 @@ def reportPilotData():
 		#5 sec reporting
 		"gpsNumSats" : gps1.num_satellites if gps1 != None else None,
 		"gpsLock" : str(gps1.fix_type) if gps1 != None else None,
-		"gpsHError" : pilot.gps_data.horizontal_uncertainty_m if gps1 != None else None,
-		"gpsVError" : pilot.gps_data.vertical_uncertainty_m if gps1 != None else None,
+		"gpsHError" : gpsd.horizontal_uncertainty_m if gpsd != None else None,
+		"gpsVError" : gpsd.vertical_uncertainty_m if gpsd != None else None,
 
 		"gps2NumSats" : gps1.num_satellites if gps1 != None else None,
 		"gps2Lock" : str(gps1.fix_type) if gps1 != None else None,
-		"gps2HError" : pilot.gps_data.horizontal_uncertainty_m if gps1 != None else None,
-		"gps2VError" : pilot.gps_data.vertical_uncertainty_m if gps1 != None else None,
+		"gps2HError" : gpsd.horizontal_uncertainty_m if gpsd != None else None,
+		"gps2VError" : gpsd.vertical_uncertainty_m if gpsd != None else None,
 
 		"currVolts" : pilot.voltages,
 		"currVoltsLevel" : pilot.bat_percent,
@@ -391,7 +402,7 @@ async def run():
 					log.info("FAILSAFE - noncritical")
 			break
 		else:
-			log.info("Waiting for HOME location")
+			log.info(f"Waiting for HOME location and good health {health}")
 
 			await sendHeartbeat(log, unitID, http, url, headers)
 			if good_heartbeat != None:

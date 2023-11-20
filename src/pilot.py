@@ -171,11 +171,13 @@ async def initVehicle():
 
 		#register listeners
 
-		await vehicle.telemetry.set_rate_position(2)
-		await vehicle.telemetry.set_rate_camera_attitude(1)
+		await vehicle.telemetry.set_rate_position(1)
 		await vehicle.telemetry.set_rate_in_air(1)
 		await vehicle.telemetry.set_rate_landed_state(1)
-		await vehicle.telemetry.set_rate_landed_state(1)
+		await vehicle.telemetry.set_rate_battery(5)
+		await vehicle.telemetry.set_rate_gps_info(1)
+		await vehicle.telemetry.set_rate_home(5)
+
 
 		tasks.append(asyncio.create_task(onPX4_battery(vehicle)))
 		tasks.append(asyncio.create_task(onPX4_mode(vehicle)))
@@ -184,6 +186,7 @@ async def initVehicle():
 		tasks.append(asyncio.create_task(onPX4_gps_info(vehicle)))
 		#tasks.append(asyncio.create_task(print_in_air(vehicle)))
 		tasks.append(asyncio.create_task(onPX4_position(vehicle)))
+		#asyncio.ensure_future(onPX4_position(vehicle))
 		tasks.append(asyncio.create_task(onPX4_raw_gps(vehicle)))
 		tasks.append(asyncio.create_task(onPX4_home(vehicle)))
 		tasks.append(asyncio.create_task(onPX4_is_armed(vehicle)))
