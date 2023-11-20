@@ -1,5 +1,8 @@
 # dronegprs-mavsdk
-port of https://github.com/maciek01/dronegprs for px4 mavsdk
+
+Port of https://github.com/maciek01/dronegprs for mavsdk. In theory it should work both with PX4 and ArduPilot (COpter and PLane) but it is being tested on:
+- actual ArduCopter FC - physical flights
+- PX4 sim - gazebo - for PX4 compatibility
 
 
 Goal of the project is to establish 2-way communication and control between ground station server and a fleet of UAVs (drones, planes, ...) leveraging 3G and 4G LTE based data networks.
