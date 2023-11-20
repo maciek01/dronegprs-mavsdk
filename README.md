@@ -1,7 +1,7 @@
 # dronegprs-mavsdk
 
-Port of https://github.com/maciek01/dronegprs for mavsdk. In theory it should work both with PX4 and ArduPilot (COpter and PLane) but it is being tested on:
-- actual ArduCopter FC - physical flights
+Port of https://github.com/maciek01/dronegprs for mavsdk. In theory it should work both with PX4 and ArduPilot (Copter and Plane) but it is being tested only on the following platforms:
+- actual ArduCopter-running FC (MATEK series) - physical flights
 - PX4 sim - gazebo - for PX4 compatibility
 
 
