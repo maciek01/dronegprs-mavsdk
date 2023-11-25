@@ -64,6 +64,9 @@ async def alt(data):
 async def speed(data):
 	return await pilot.speed(data)	
 
+async def setToCurrAlt(data):
+	return await pilot.setToCurrAlt(data)
+
 async def decAlt1(data):
 	return await pilot.decAlt1(data)
 	
@@ -131,6 +134,7 @@ actions = {
 	"GOTO" : goto,
 	"ALT" : alt,
 	"SPEED" : speed,
+	"SETCURRALT" : setToCurrAlt,
 	"DECALT1" : decAlt1,
 	"DECALT10" : decAlt10,
 	"INCALT10" : incAlt10,

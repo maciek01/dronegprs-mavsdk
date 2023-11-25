@@ -516,6 +516,8 @@ async def pause(data):
 async def resume(data):
 
 	global vehicle
+	global pos
+	global home
 	global requestedLat
 	global requestedLon
 	global operatingSpeed
@@ -541,8 +543,11 @@ async def resume(data):
 			except:
 				traceback.print_exc()
 
+			try:
+				await vehicle.action.set_current_speed(float(operatingSpeed))
+			except:
+				traceback.print_exc()
 
-			await vehicle.action.set_current_speed(float(operatingSpeed))
 
 			savedLat = None
 			savedLon = None
@@ -611,7 +616,11 @@ async def rtl(data):
 		except:
 			traceback.print_exc()
 
-		await vehicle.action.set_current_speed(float(operatingSpeed))
+		try:
+			await vehicle.action.set_current_speed(float(operatingSpeed))
+		except:
+			traceback.print_exc()
+
 		await releaseSticks()
 
 		#cancel last goto
@@ -632,6 +641,7 @@ async def rtl(data):
 async def goto(data):
 
 	global vehicle
+	global home
 	global operatingAlt
 	global requestedLat
 	global requestedLon
@@ -663,7 +673,11 @@ async def goto(data):
 		except:
 			traceback.print_exc()
 
-		await vehicle.action.set_current_speed(float(operatingSpeed))
+		try:
+			await vehicle.action.set_current_speed(float(operatingSpeed))
+		except:
+			traceback.print_exc()
+
 
 		await releaseSticks()
 
@@ -671,7 +685,7 @@ async def goto(data):
 		savedLat = None
 		savedLon = None
 
-		log.info(" going to ")
+		log.info("going to ")
 		return "OK"
 
 	finally:
@@ -704,11 +718,9 @@ async def setHome(data):
 		
 async def alt(data):
 
-	global vehicle
 	global operatingAlt
 	global requestedLat
 	global requestedLon
-	global operatingSpeed
 	global log
 	
 	lockV()
@@ -720,25 +732,10 @@ async def alt(data):
 		for i in parameters:
 			if i['name'] == "alt":
 				operatingAlt = i['value']
-				if requestedLat != None and requestedLon != None:
-					#wont work in LOITER mode
-					#vehicle.mode = VehicleMode("GUIDED")
-					#point1 = LocationGlobalRelative(float(requestedLat), float(requestedLon), int(operatingAlt))
-					#vehicle.simple_goto(point1, int(operatingSpeed))
 
-
-
-					brg = get_bearing(pos.latitude_deg, pos.longitude_deg, float(requestedLat), float(requestedLon))
-
-
-					try:
-						await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(brg))
-					except:
-						traceback.print_exc()
-
-					await vehicle.action.set_current_speed(float(operatingSpeed))
+				changeAlt(requestedLat, requestedLon, operatingAlt)
 		
-		log.info(" operating alt is now " + operatingAlt)
+		log.info("new operating alt is now " + operatingAlt)
 		return "OK"
 
 	finally:
@@ -746,38 +743,74 @@ async def alt(data):
 		
 async def altAdjust(delta):
 
-	global vehicle
 	global operatingAlt
 	global requestedLat
 	global requestedLon
-	global operatingSpeed
+	global log
 	
 	lockV()
 	try:
 		operatingAlt = str(max(int(operatingAlt) + delta, 0))
 		
-		
-		if requestedLat != None and requestedLon != None:
-			#wont work in LOITER mode
+		await changeAlt(requestedLat, requestedLon, operatingAlt)
 
-			brg = get_bearing(pos.latitude_deg, pos.longitude_deg, float(requestedLat), float(requestedLon))
-
-
-			try:
-				await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(brg))
-			except:
-				traceback.print_exc()
-
-			await vehicle.action.set_current_speed(float(operatingSpeed))
-
-		
-		log.info(" operating alt is now " + operatingAlt)
+		log.info("adjusted operating alt is now " + operatingAlt)
 
 		return "OK"
 
 	finally:
 		unlockV()		
-		
+
+async def setToCurrAlt(data):
+	global operatingAlt
+	global requestedLat
+	global requestedLon
+	global pos
+	global log
+
+
+	lockV()
+	try:
+		log.info("SETCURRALT")
+
+		operatingAlt = str(max(int(pos.relative_altitude_m), 0))
+
+		await changeAlt(requestedLat, requestedLon, operatingAlt)
+
+		log.info("adjusted operating alt is now " + operatingAlt)
+
+		return "OK"
+
+	finally:
+		unlockV()
+
+	
+async def changeAlt(requestedLat, requestedLon, relAlt):
+
+	global vehicle
+	global pos
+	global home
+	global operatingAlt
+	global operatingSpeed
+
+	
+	if requestedLat != None and requestedLon != None:
+		#wont work in LOITER mode
+
+		brg = get_bearing(pos.latitude_deg, pos.longitude_deg, float(requestedLat), float(requestedLon))
+
+
+		try:
+			await vehicle.action.goto_location(float(requestedLat), float(requestedLon), float(home.absolute_altitude_m) + float(operatingAlt), float(brg))
+		except:
+			traceback.print_exc()
+
+		try:
+			await vehicle.action.set_current_speed(float(operatingSpeed))
+		except:
+			traceback.print_exc()
+
+
 async def speed(data):
 
 	global vehicle
