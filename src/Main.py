@@ -36,6 +36,7 @@ log = None
 
 def subst(str, net = False):
 	global HOST
+	global unitID
 	ipAddress = HOST
 	if net:
 		try:
@@ -45,6 +46,7 @@ def subst(str, net = False):
 
 	if str != None:
 		str = str.replace("${HOSTNAME}", HOST)
+		str = str.replace("${unitID}", unitID)
 		if net:
 			str = str.replace("${HOSTIP}", ipAddress)
 
@@ -298,6 +300,8 @@ async def run():
 	#read cfg params
 	HOST = config.get('main', 'HOSTNAME')
 	HOST = HOST if HOST != "" else "home.kolesnik.org"
+	unitID = config.get('main', 'unitID')
+	unitID = unitID if unitID != "" else "uav0"
 	mavlinkPort = subst(config.get('main', 'mavlinkPort'))
 	mavlinkBaud = subst(config.get('main', 'mavlinkBaud'))
 	gpsPort = subst(config.get('main', 'gpsPort'))
@@ -308,7 +312,6 @@ async def run():
 	host = subst(config.get('main', 'host'))
 	uri = subst(config.get('main', 'uri'))
 	dbfile = subst(config.get('main', 'dbfile'))
-	unitID = subst(config.get('main', 'unitID'))
 	FS_TRESHOLD = int(config.get('main', 'FS_TRESHOLD'))
 	videoStreamCmd = subst(config.get('main', 'videoStreamCmd'))
 
