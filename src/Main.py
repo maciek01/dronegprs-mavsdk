@@ -29,6 +29,7 @@ HTTP_TIMEOUT = 5
 
 gpsPort = None
 unitID = None
+videoChannel = None
 mavlinkPort = None
 
 log = None
@@ -55,6 +56,7 @@ def subst(str, net = False):
 #this is for GPS pinger mode if enabled
 def reportGPSData():
 	global unitID
+	global videoChannel
 	global gpsPort
 
 	if gpsPort == "":
@@ -62,6 +64,7 @@ def reportGPSData():
 
 	data = {
 		"unitId" : unitID,
+		"videoChannel" : videoChannel,
 		"stateTimestampMS" : gps.current_milli_time(),
 		"gpsLatLon" : gps.GPSLAT + " / " + gps.GPSLON,
 		"gpsLat" : gps.GPSLATNORM,
@@ -86,6 +89,7 @@ def reportGPSData():
 #this is for mission control mode if enabled
 def reportPilotData():
 	global unitID
+	global videoChannel
 	global mavlinkPort
 
 	if pilot.vehicle == None or mavlinkPort == "":
@@ -113,6 +117,7 @@ def reportPilotData():
 	data = {
 		#1s reporting
 		"unitId" : unitID,
+		"videoChannel" : videoChannel,
 
 		"stateTimestampMS" : pilot.current_milli_time(),
 		"gpsLatLon" : "",
@@ -192,7 +197,7 @@ def mergeData(pilotData, gpsData):
 
 	return pilotData
 
-async def sendHeartbeat(log, unitID, http, url, headers):
+async def sendHeartbeat(log, unitID, videoChannel, http, url, headers):
 
 	content = None
 	global good_heartbeat
@@ -220,6 +225,7 @@ async def sendHeartbeat(log, unitID, http, url, headers):
 			data = {
 				#1s reporting
 				"unitId" : unitID,
+				"videoChannel" : videoChannel,
 				"videostat" : "ON" if video_manager.process != None else "OFF",
 
 				"modemstatus" : modem.MODEMSTATUS,
@@ -273,6 +279,7 @@ async def run():
 	global HTTP_TIMEOUT
 	global gpsPort
 	global unitID
+	global videoChannel
 	global mavlinkPort
 	global log
 
@@ -302,6 +309,7 @@ async def run():
 	HOST = HOST if HOST != "" else "home.kolesnik.org"
 	unitID = config.get('main', 'unitID')
 	unitID = unitID if unitID != "" else "uav0"
+	videoChannel = subst(config.get('main', 'videoChannel'))
 	mavlinkPort = subst(config.get('main', 'mavlinkPort'))
 	mavlinkBaud = subst(config.get('main', 'mavlinkBaud'))
 	gpsPort = subst(config.get('main', 'gpsPort'))
@@ -325,6 +333,7 @@ async def run():
 
 	log.info("CONFIGURATION:")
 	log.info(" unitID:" + unitID)
+	log.info(" videoChannel:" + videoChannel)
 	log.info(" url:" + url)
 	log.info(" mavlinkPort:" + mavlinkPort)
 	log.info(" mavlinkBaud:" + mavlinkBaud)
@@ -384,7 +393,7 @@ async def run():
 	while pilot.vehicle == None and mavlinkPort != "":
 		log.info(" Waiting for vehicle connection ...")
 		await asyncio.sleep(1)
-		await sendHeartbeat(log, unitID, http, url, headers)
+		await sendHeartbeat(log, unitID, videoChannel, http, url, headers)
 		if good_heartbeat != None:
 			if pilot.current_milli_time() - good_heartbeat > FS_TRESHOLD:
 				log.info("FAILSAFE - noncritical")
@@ -399,7 +408,7 @@ async def run():
 	async for health in pilot.vehicle.telemetry.health():
 		if health.is_global_position_ok and health.is_home_position_ok:
 			log.info("Global position state is good enough for flying.")
-			await sendHeartbeat(log, unitID, http, url, headers)
+			await sendHeartbeat(log, unitID, videoChannel, http, url, headers)
 			if good_heartbeat != None:
 				if pilot.current_milli_time() - good_heartbeat > FS_TRESHOLD:
 					log.info("FAILSAFE - noncritical")
@@ -407,7 +416,7 @@ async def run():
 		else:
 			log.info(f"Waiting for HOME location and good health {health}")
 
-			await sendHeartbeat(log, unitID, http, url, headers)
+			await sendHeartbeat(log, unitID, videoChannel, http, url, headers)
 			if good_heartbeat != None:
 				if pilot.current_milli_time() - good_heartbeat > FS_TRESHOLD:
 					log.info("FAILSAFE - noncritical")
@@ -420,7 +429,7 @@ async def run():
 	log.info("STARTING COMMAND LOOP")
 	while True:
 		await asyncio.sleep(1)
-		await sendHeartbeat(log, unitID, http, url, headers)
+		await sendHeartbeat(log, unitID, videoChannel, http, url, headers)
 		if good_heartbeat != None:
 			if pilot.current_milli_time() - good_heartbeat > FS_TRESHOLD:
 				log.error("FAILSAFE condition")
